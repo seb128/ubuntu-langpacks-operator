@@ -69,7 +69,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         except KeyError:
             logger.warning("No 'gpg-secret-id' config, can't set up signing key")
             self.unit.status = ops.ActiveStatus(
-                "No 'gpg-secret-id' config, signing will not be available."
+                "Signing disabled. Set the 'gpg-secret-id' to enable."
             )
             return
 
