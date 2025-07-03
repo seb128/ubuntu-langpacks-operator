@@ -98,9 +98,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         release = event.params["release"]
         base = event.params["base"]
 
-        self.unit.status = ops.MaintenanceStatus(
-            f"Building new langpacks, base={base}, release={release}"
-        )
+        self.unit.status = ops.MaintenanceStatus("Building langpacks")
 
         try:
             self._langpacks.build_langpacks(base, release)
@@ -113,7 +111,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
 
     def _on_upload_langpacks(self, event: ops.ActionEvent):
         """Upload pending langpacks."""
-        self.unit.status = ops.MaintenanceStatus("Uploading the langpacks")
+        self.unit.status = ops.MaintenanceStatus("Uploading langpacks")
         try:
             self._langpacks.upload_langpacks()
         except CalledProcessError:
@@ -126,7 +124,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
 
     def _on_stop(self, event: ops.StopEvent):
         """Handle stop event."""
-        self.unit.status = ops.MaintenanceStatus("Removing the crontab")
+        self.unit.status = ops.MaintenanceStatus("Removing crontab")
 
         try:
             self._langpacks.disable_crontab()
