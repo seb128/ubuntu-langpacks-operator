@@ -68,18 +68,18 @@ class Langpacks:
             apt.update()
             logger.debug("Apt index refreshed.")
         except CalledProcessError as e:
-            logger.error(f"failed to update package cache: {e}")
+            logger.error("failed to update package cache: %s", e)
             raise
 
         for p in PACKAGES:
             try:
                 apt.add_package(p)
-                logger.debug(f"Package {p} installed")
+                logger.debug("Package %s installed", p)
             except PackageNotFoundError:
-                logger.error(f"failed to find package {p} in package cache")
+                logger.error("failed to find package %s in package cache", p)
                 raise
             except PackageError as e:
-                logger.error(f"failed to install {p}: {e}")
+                logger.error("failed to install %s: %s", p, e)
                 raise
 
         # Clone the langpack-o-matic repo
@@ -103,7 +103,7 @@ class Langpacks:
             )
             logger.debug("Langpack-o-matic vcs cloned.")
         except CalledProcessError as e:
-            logger.debug(f"Git clone of the code failed: {e.stdout}")
+            logger.debug("Git clone of the code failed: %s", e.stdout)
             raise
 
     def update_checkout(self):
@@ -127,7 +127,7 @@ class Langpacks:
             )
             logger.debug("Langpack-o-matic checkout updated.")
         except CalledProcessError as e:
-            logger.debug(f"Git pull of the langpack-o-matic repository failed: {e.stdout}")
+            logger.debug("Git pull of the langpack-o-matic repository failed: %s", e.stdout)
             raise
 
         # Call make target
@@ -148,7 +148,7 @@ class Langpacks:
             )
             logger.debug("Langpack-o-matic bin/msgequal build.")
         except CalledProcessError as e:
-            logger.debug(f"Build of bin/msgequal failed: {e.stdout}")
+            logger.debug("Build of bin/msgequal failed %s", e.stdout)
             raise
 
     def _clean_builddir(self, releasedir):
@@ -162,9 +162,9 @@ class Langpacks:
             if os.path.exists(builddir):
                 try:
                     shutil.rmtree(builddir)
-                    logger.debug(f"Removed the existing cache directory: {builddir}")
+                    logger.debug("Removed the existing cache directory: %s", builddir)
                 except OSError as e:
-                    logger.error(f"Failed to remove cache directory {builddir}: {e}")
+                    logger.error("Failed to remove cache directory %s: %s", builddir, e)
 
     def build_langpacks(self, base, release):
         """Build the langpacks."""
@@ -183,7 +183,7 @@ class Langpacks:
             release = devel_series
 
         if release not in active_series:
-            logger.debug(f"Release {release} isn't an active Ubuntu series")
+            logger.debug("Release %s isn't an active Ubuntu series", release)
             return
 
         releasedir = HOME / release
@@ -203,9 +203,9 @@ class Langpacks:
                     stderr=STDOUT,
                     text=True,
                 )
-                logger.debug(f"Directory {HOME / release} created.")
+                logger.debug("Directory %s created.", HOME / release)
             except CalledProcessError as e:
-                logger.debug(f"Creating directory failed: {e.stdout}")
+                logger.debug("Creating directory failed: %s", e.stdout)
                 raise
 
         if base:
@@ -246,7 +246,7 @@ class Langpacks:
             )
             logger.debug("Translations tarball downloaded.")
         except CalledProcessError:
-            logger.debug(f"Downloading {download_url} failed")
+            logger.debug("Downloading %s failed", download_url)
             raise
 
         # Call the import script that prepares the packages
@@ -266,7 +266,7 @@ class Langpacks:
             )
             logger.debug("Translations packages prepared.")
         except CalledProcessError as e:
-            logger.debug(f"Building the langpacks source failed: {e.stdout}")
+            logger.debug("Building the langpacks source failed: %s", e.stdout)
             raise
 
     def upload_langpacks(self):
@@ -288,7 +288,7 @@ class Langpacks:
             )
             logger.debug("Language packs uploaded.")
         except CalledProcessError as e:
-            logger.debug(f"Uploading the langpacks failed: {e.stdout}")
+            logger.debug("Uploading the langpacks failed: %s", e.stdout)
             raise
 
     def disable_crontab(self):
@@ -307,7 +307,7 @@ class Langpacks:
                 text=True,
             )
         except CalledProcessError as e:
-            logger.debug(f"Disabling of crontab failed: {e.stdout}")
+            logger.debug("Disabling of crontab failed: %s", e.stdout)
             raise
 
     def import_gpg_key(self, key):
@@ -327,7 +327,7 @@ class Langpacks:
                 stderr=STDOUT,
                 text=True,
             )
-            logger.debug(f"GPG key imported: {response.stdout}")
+            logger.debug("GPG key imported: %s", response.stdout)
         except CalledProcessError as e:
-            logger.debug(f"Importing key failed: {e.stdout}")
+            logger.debug("Importing key failed: %s", e.stdout)
             raise
