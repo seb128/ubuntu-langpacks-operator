@@ -68,7 +68,7 @@ class Langpacks:
             apt.update()
             logger.debug("Apt index refreshed.")
         except CalledProcessError as e:
-            logger.error("failed to update package cache: %s", e)
+            logger.error("Failed to update package cache: %s", e)
             raise
 
         for p in PACKAGES:
@@ -76,10 +76,10 @@ class Langpacks:
                 apt.add_package(p)
                 logger.debug("Package %s installed", p)
             except PackageNotFoundError:
-                logger.error("failed to find package %s in package cache", p)
+                logger.error("Failed to find package %s in package cache", p)
                 raise
             except PackageError as e:
-                logger.error("failed to install %s: %s", p, e)
+                logger.error("Failed to install %s: %s", p, e)
                 raise
 
         # Clone the langpack-o-matic repo
