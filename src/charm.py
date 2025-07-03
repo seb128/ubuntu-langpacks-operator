@@ -76,7 +76,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         try:
             gpgkey: Secret = self.model.get_secret(id=secret_id)
             keycontent = gpgkey.get_content().get("key")
-        except ops.SecretNotFoundError:
+        except (ops.SecretNotFoundError, ops.model.ModelError):
             logger.warning("Signing key secret not found")
             self.unit.status = ops.ActiveStatus(
                 "Secret not available. Check that access was granted."
