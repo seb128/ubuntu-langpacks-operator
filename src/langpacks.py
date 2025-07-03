@@ -151,7 +151,7 @@ class Langpacks:
             logger.debug("Build of bin/msgequal failed %s", e.stdout)
             raise
 
-    def _clean_builddir(self, releasedir):
+    def _clean_builddir(self, releasedir: Path):
         """Clean build cache."""
         if not os.path.exists(releasedir):
             return
@@ -166,7 +166,7 @@ class Langpacks:
                 except OSError as e:
                     logger.error("Failed to remove cache directory %s: %s", builddir, e)
 
-    def build_langpacks(self, base, release):
+    def build_langpacks(self, base: bool, release: str):
         """Build the langpacks."""
         lp = Launchpad.login_anonymously("langpacks", "production")
         ubuntu = lp.distributions["ubuntu"]
@@ -310,7 +310,7 @@ class Langpacks:
             logger.debug("Disabling of crontab failed: %s", e.stdout)
             raise
 
-    def import_gpg_key(self, key):
+    def import_gpg_key(self, key: str):
         """Import the private gpg key."""
         try:
             response = run(
