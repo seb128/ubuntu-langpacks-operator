@@ -57,8 +57,7 @@ class Langpacks:
             logger.debug("Crontab configured.")
             return
         except CalledProcessError as e:
-            logger.debug(
-            "Installation of the crontab failed: '%s'", e.stdout)
+            logger.debug("Installation of the crontab failed: '%s'", e.stdout)
             raise
 
     def install(self):
