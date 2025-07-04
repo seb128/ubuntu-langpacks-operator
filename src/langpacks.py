@@ -10,6 +10,7 @@ from pathlib import Path
 from subprocess import PIPE, STDOUT, CalledProcessError, run
 
 import charms.operator_libs_linux.v0.apt as apt
+import requests
 from charms.operator_libs_linux.v0.apt import PackageError, PackageNotFoundError
 from launchpadlib.launchpad import Launchpad
 
@@ -165,6 +166,17 @@ class Langpacks:
                 except OSError as e:
                     logger.error("Failed to remove cache directory %s: %s", builddir, e)
 
+    def _download_tarball(self, url: str, filename: Path):
+        try:
+            with requests.get(url, stream=True, timeout=10) as r:
+                r.raise_for_status()
+
+                with open(filename, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+        except Exception:
+            raise
+
     def build_langpacks(self, base: bool, release: str):
         """Build the langpacks."""
         lp = Launchpad.login_anonymously("langpacks", "production")
@@ -226,26 +238,10 @@ class Langpacks:
 
         # Download the current translations tarball from launchpad
         try:
-            run(
-                [
-                    "sudo",
-                    "-u",
-                    "ubuntu",
-                    "wget",
-                    "--no-check-certificate",
-                    "-q",
-                    "-O",
-                    tarball,
-                    download_url,
-                ],
-                check=True,
-                stdout=PIPE,
-                stderr=STDOUT,
-                text=True,
-            )
+            self._download_tarball(download_url, tarball)
             logger.debug("Translations tarball downloaded.")
-        except CalledProcessError:
-            logger.debug("Downloading %s failed", download_url)
+        except Exception as e:
+            logger.debug("Downloading %s failed: %s", download_url, e)
             raise
 
         # Call the import script that prepares the packages
@@ -264,7 +260,7 @@ class Langpacks:
                 text=True,
             )
             logger.debug("Translations packages prepared.")
-        except CalledProcessError as e:
+        except Exception as e:
             logger.debug("Building the langpacks source failed: %s", e.stdout)
             raise
 

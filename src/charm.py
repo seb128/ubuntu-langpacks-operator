@@ -10,6 +10,7 @@ from subprocess import CalledProcessError
 import ops
 from charms.operator_libs_linux.v0.apt import PackageError, PackageNotFoundError
 from ops.model import Secret
+from requests.exceptions import RequestException
 
 from langpacks import Langpacks
 
@@ -104,7 +105,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
 
         try:
             self._langpacks.build_langpacks(base, release)
-        except CalledProcessError:
+        except (CalledProcessError, IOError, RequestException):
             self.unit.status = ops.BlockedStatus(
                 "Failed to build langpacks. Check `juju debug-log` for details."
             )
