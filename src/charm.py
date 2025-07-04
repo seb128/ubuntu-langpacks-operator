@@ -117,6 +117,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         self.unit.status = ops.MaintenanceStatus("Uploading langpacks")
 
         if not self._has_signing_key:
+            logger.warning("Can't upload langpacks without a signing key")
             self.unit.status = ops.ActiveStatus(
                 "Upload disabled. Set and grant 'gpg-secret-id' to enable."
             )
