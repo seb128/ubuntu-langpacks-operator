@@ -88,7 +88,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         try:
             self._langpacks.import_gpg_key(keycontent)
         except CalledProcessError:
-            self.unit.status = ops.BlockedStatus(
+            self.unit.status = ops.ActiveStatus(
                 "Failed to import the signing key. Check `juju debug-log` for details."
             )
             return
@@ -106,7 +106,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         try:
             self._langpacks.build_langpacks(base, release)
         except (CalledProcessError, IOError, RequestException):
-            self.unit.status = ops.BlockedStatus(
+            self.unit.status = ops.ActiveStatus(
                 "Failed to build langpacks. Check `juju debug-log` for details."
             )
             return
@@ -126,7 +126,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         try:
             self._langpacks.upload_langpacks()
         except CalledProcessError:
-            self.unit.status = ops.BlockedStatus(
+            self.unit.status = ops.ActiveStatus(
                 "Failed to upload langpacks. Check `juju debug-log` for details."
             )
             return
