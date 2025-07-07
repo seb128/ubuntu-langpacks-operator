@@ -35,6 +35,7 @@ BUILDDIR = Path("~ubuntu").expanduser()
 REPO_LOCATION = Path("/app/langpack-o-matic")
 REPO_URL = "https://git.launchpad.net/langpack-o-matic"
 
+
 class Langpacks:
     """Represent a langpacks instance in the workload."""
 
@@ -80,7 +81,6 @@ class Langpacks:
             logger.error("Error updating repository: %s", e)
             raise
 
-
     def install(self):
         """Install the langpack builder environment."""
         # Install the deb packages needed for the service
@@ -106,7 +106,7 @@ class Langpacks:
         try:
             self._checkout_git(REPO_URL, REPO_LOCATION)
             logger.debug("Langpack-o-matic vcs cloned.")
-        except GitCommandError as e:
+        except GitCommandError:
             raise
 
     def update_checkout(self):
@@ -114,7 +114,7 @@ class Langpacks:
         try:
             self._update_git(REPO_URL, REPO_LOCATION)
             logger.debug("Langpack-o-matic checkout updated.")
-        except GitCommandError as e:
+        except GitCommandError:
             raise
 
         # Call make target
