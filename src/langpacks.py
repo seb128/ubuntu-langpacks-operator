@@ -12,6 +12,7 @@ from subprocess import PIPE, STDOUT, CalledProcessError, run
 import charms.operator_libs_linux.v0.apt as apt
 import requests
 from charms.operator_libs_linux.v0.apt import PackageError, PackageNotFoundError
+from git import GitCommandError, Repo
 from launchpadlib.launchpad import Launchpad
 
 logger = logging.getLogger(__name__)
@@ -30,9 +31,9 @@ PACKAGES = [
     "lintian",
 ]
 
-HOME = Path("~ubuntu").expanduser()
-REPO_LOCATION = HOME / "langpack-o-matic"
-
+BUILDDIR = Path("~ubuntu").expanduser()
+REPO_LOCATION = Path("/app/langpack-o-matic")
+REPO_URL = "https://git.launchpad.net/langpack-o-matic"
 
 class Langpacks:
     """Represent a langpacks instance in the workload."""
@@ -61,6 +62,27 @@ class Langpacks:
             logger.debug("Installation of the crontab failed: '%s'", e.stdout)
             raise
 
+    def _checkout_git(self, repo_url: str, clone_path: str):
+        """Check out a Git repository."""
+        logger.debug("Cloning repository from %s to %s", repo_url, clone_path)
+        try:
+            Repo.clone_from(repo_url, clone_path)
+        except GitCommandError as e:
+            logger.error("Error cloning repository: %s", e)
+            raise
+
+    def _update_git(self, repo_url: str, clone_path: str):
+        """Update a Git repository checkout."""
+        try:
+            repo = Repo(clone_path)
+            origin = repo.remotes.origin
+            origin.pull()
+            logger.debug("Repository updated.")
+        except GitCommandError as e:
+            logger.error("Error updating repository: %s", e)
+            raise
+
+
     def install(self):
         """Install the langpack builder environment."""
         # Install the deb packages needed for the service
@@ -84,59 +106,23 @@ class Langpacks:
 
         # Clone the langpack-o-matic repo
         try:
-            run(
-                [
-                    "sudo",
-                    "-u",
-                    "ubuntu",
-                    "git",
-                    "clone",
-                    "-b",
-                    "master",
-                    "https://git.launchpad.net/langpack-o-matic",
-                    REPO_LOCATION,
-                ],
-                check=True,
-                stdout=PIPE,
-                stderr=STDOUT,
-                text=True,
-            )
+            self._checkout_git(REPO_URL, REPO_LOCATION)
             logger.debug("Langpack-o-matic vcs cloned.")
-        except CalledProcessError as e:
-            logger.debug("Git clone of the code failed: %s", e.stdout)
+        except GitCommandError as e:
             raise
 
     def update_checkout(self):
         """Update the langpack-o-matic checkout."""
-        # Pull Vcs updates
         try:
-            run(
-                [
-                    "sudo",
-                    "-u",
-                    "ubuntu",
-                    "git",
-                    "-C",
-                    REPO_LOCATION,
-                    "pull",
-                ],
-                check=True,
-                stdout=PIPE,
-                stderr=STDOUT,
-                text=True,
-            )
+            self._update_git(REPO_URL, REPO_LOCATION)
             logger.debug("Langpack-o-matic checkout updated.")
-        except CalledProcessError as e:
-            logger.debug("Git pull of the langpack-o-matic repository failed: %s", e.stdout)
+        except GitCommandError as e:
             raise
 
         # Call make target
         try:
             run(
                 [
-                    "sudo",
-                    "-u",
-                    "ubuntu",
                     "make",
                     "-C",
                     REPO_LOCATION / "bin",
@@ -197,7 +183,7 @@ class Langpacks:
             logger.debug("Release %s isn't an active Ubuntu series", release)
             return
 
-        releasedir = HOME / release
+        releasedir = BUILDDIR / release
         if not os.path.exists(releasedir):
             # Create target directory
             try:
@@ -207,14 +193,14 @@ class Langpacks:
                         "-u",
                         "ubuntu",
                         "mkdir",
-                        HOME / release,
+                        BUILDDIR / release,
                     ],
                     check=True,
                     stdout=PIPE,
                     stderr=STDOUT,
                     text=True,
                 )
-                logger.debug("Directory %s created.", HOME / release)
+                logger.debug("Directory %s created.", BUILDDIR / release)
             except CalledProcessError as e:
                 logger.debug("Creating directory failed: %s", e.stdout)
                 raise
@@ -252,9 +238,10 @@ class Langpacks:
                 + [
                     tarball,
                     release,
-                    HOME / release,
+                    BUILDDIR / release,
                 ],
                 check=True,
+                cwd=BUILDDIR,
                 stdout=PIPE,
                 stderr=STDOUT,
                 text=True,
@@ -275,7 +262,7 @@ class Langpacks:
                     REPO_LOCATION / "packages",
                     "upload",
                 ],
-                cwd=REPO_LOCATION,
+                cwd=BUILDDIR,
                 check=True,
                 stdout=PIPE,
                 stderr=STDOUT,

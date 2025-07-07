@@ -3,7 +3,7 @@ name = "ubuntu-langpacks-operator"
 version = "0.1.0"
 requires-python = ">=3.8"
 
-dependencies = ["launchpadlib", "ops", "requests"]
+dependencies = ["launchpadlib", "ops", "GitPython", "requests"]
 
 [project.optional-dependencies]
 dev = [
