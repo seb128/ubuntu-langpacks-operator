@@ -46,10 +46,8 @@ class Langpacks:
         try:
             run(
                 [
-                    "su",
-                    "-c",
-                    "crontab src/crontab",
-                    "ubuntu",
+                    "crontab",
+                    "src/crontab",
                 ],
                 check=True,
                 stdout=PIPE,
@@ -189,9 +187,6 @@ class Langpacks:
             try:
                 run(
                     [
-                        "sudo",
-                        "-u",
-                        "ubuntu",
                         "mkdir",
                         BUILDDIR / release,
                     ],
@@ -233,7 +228,7 @@ class Langpacks:
         # Call the import script that prepares the packages
         try:
             run(
-                ["sudo", "-u", "ubuntu", REPO_LOCATION / "import"]
+                [REPO_LOCATION / "import"]
                 + import_options
                 + [
                     tarball,
@@ -256,9 +251,6 @@ class Langpacks:
         try:
             run(
                 [
-                    "sudo",
-                    "-u",
-                    "ubuntu",
                     REPO_LOCATION / "packages",
                     "upload",
                 ],
@@ -278,10 +270,8 @@ class Langpacks:
         try:
             run(
                 [
-                    "su",
-                    "-c",
-                    "crontab -r",
-                    "ubuntu",
+                    "crontab",
+                    "-r",
                 ],
                 check=True,
                 stdout=PIPE,
@@ -297,9 +287,6 @@ class Langpacks:
         try:
             response = run(
                 [
-                    "sudo",
-                    "-u",
-                    "ubuntu",
                     "gpg",
                     "--import",
                 ],
