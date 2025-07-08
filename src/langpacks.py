@@ -31,7 +31,8 @@ PACKAGES = [
     "lintian",
 ]
 
-BUILDDIR = Path("~ubuntu").expanduser()
+BUILDDIR = Path("/app/build")
+LOGDIR = Path("/app/log")
 REPO_LOCATION = Path("/app/langpack-o-matic")
 REPO_URL = "https://git.launchpad.net/langpack-o-matic"
 
@@ -109,6 +110,15 @@ class Langpacks:
         except GitCommandError:
             raise
 
+        # Create the build and log directories
+        for dname in (BUILDDIR, LOGDIR):
+            try:
+                os.mkdir(dname)
+                logger.debug("Directory %s created", dname)
+            except OSError as e:
+                logger.warning("Creating directory %s failed: %s", dname, e)
+                raise
+
     def update_checkout(self):
         """Update the langpack-o-matic checkout."""
         try:
@@ -139,16 +149,13 @@ class Langpacks:
         """Clean build cache."""
         if not os.path.exists(releasedir):
             return
-        for builddir in (
-            releasedir / "sources-base",
-            releasedir / "sources-update",
-        ):
-            if os.path.exists(builddir):
-                try:
-                    shutil.rmtree(builddir)
-                    logger.debug("Removed the existing cache directory: %s", builddir)
-                except OSError as e:
-                    logger.error("Failed to remove cache directory %s: %s", builddir, e)
+
+        if os.path.exists(releasedir):
+            try:
+                shutil.rmtree(releasedir)
+                logger.debug("Removed the existing cache directory: %s", releasedir)
+            except OSError as e:
+                logger.error("Failed to remove cache directory %s: %s", releasedir, e)
 
     def _download_tarball(self, url: str, filename: Path):
         try:
@@ -182,23 +189,6 @@ class Langpacks:
             return
 
         releasedir = BUILDDIR / release
-        if not os.path.exists(releasedir):
-            # Create target directory
-            try:
-                run(
-                    [
-                        "mkdir",
-                        BUILDDIR / release,
-                    ],
-                    check=True,
-                    stdout=PIPE,
-                    stderr=STDOUT,
-                    text=True,
-                )
-                logger.debug("Directory %s created.", BUILDDIR / release)
-            except CalledProcessError as e:
-                logger.debug("Creating directory failed: %s", e.stdout)
-                raise
 
         if base:
             download_url = (
@@ -217,6 +207,14 @@ class Langpacks:
             tarball = REPO_LOCATION / f"ubuntu-{release}-translations-update.tar.gz"
             import_options = ["-v", "--update", "--treshold=10"]
 
+        # Create the build target directory
+        try:
+            os.makedirs(releasedir, exist_ok=True)
+            logger.debug("Directory %s created", releasedir)
+        except OSError as e:
+            logger.warning("Creating directory %s failed: %s", releasedir, e)
+            raise
+
         # Download the current translations tarball from launchpad
         try:
             self._download_tarball(download_url, tarball)
@@ -226,21 +224,24 @@ class Langpacks:
             raise
 
         # Call the import script that prepares the packages
+        logger.debug("Creating the packages.")
         try:
-            run(
-                [REPO_LOCATION / "import"]
-                + import_options
-                + [
-                    tarball,
-                    release,
-                    BUILDDIR / release,
-                ],
-                check=True,
-                cwd=BUILDDIR,
-                stdout=PIPE,
-                stderr=STDOUT,
-                text=True,
-            )
+            logpath = LOGDIR / release
+            with open(logpath, "a") as logfile:
+                run(
+                    [REPO_LOCATION / "import"]
+                    + import_options
+                    + [
+                        tarball,
+                        release,
+                        BUILDDIR / release,
+                    ],
+                    check=True,
+                    cwd=BUILDDIR,
+                    stdout=logfile,
+                    stderr=STDOUT,
+                    text=True,
+                )
             logger.debug("Translations packages prepared.")
         except Exception as e:
             logger.debug("Building the langpacks source failed: %s", e.stdout)
@@ -249,17 +250,19 @@ class Langpacks:
     def upload_langpacks(self):
         """Upload the packages."""
         try:
-            run(
-                [
-                    REPO_LOCATION / "packages",
-                    "upload",
-                ],
-                cwd=BUILDDIR,
-                check=True,
-                stdout=PIPE,
-                stderr=STDOUT,
-                text=True,
-            )
+            logpath = LOGDIR / "upload.log"
+            with open(logpath, "a") as logfile:
+                run(
+                    [
+                        REPO_LOCATION / "packages",
+                        "upload",
+                    ],
+                    cwd=BUILDDIR,
+                    check=True,
+                    stdout=logfile,
+                    stderr=STDOUT,
+                    text=True,
+                )
             logger.debug("Language packs uploaded.")
         except CalledProcessError as e:
             logger.debug("Uploading the langpacks failed: %s", e.stdout)
