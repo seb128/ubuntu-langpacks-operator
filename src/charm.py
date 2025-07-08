@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 class UbuntuLangpacksCharm(ops.CharmBase):
     """Charmed Operator for Ubuntu langpacks."""
 
+    _stored = ops.StoredState()
+
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
         self.framework.observe(self.on.start, self._on_start)
@@ -30,7 +32,8 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         self.framework.observe(self.on.stop, self._on_stop)
 
         self._langpacks = Langpacks()
-        self._has_signing_key = False
+
+        self._stored.set_default(has_signing_key=False)
 
     def _on_start(self, event: ops.StartEvent):
         """Handle start event."""
@@ -93,7 +96,8 @@ class UbuntuLangpacksCharm(ops.CharmBase):
             )
             return
 
-        self._has_signing_key = True
+        logger.debug("Signing key imported")
+        self._stored.has_signing_key = True
         self.unit.status = ops.ActiveStatus()
 
     def _on_build_langpacks(self, event: ops.ActionEvent):
@@ -116,7 +120,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         """Upload pending langpacks."""
         self.unit.status = ops.MaintenanceStatus("Uploading langpacks")
 
-        if not self._has_signing_key:
+        if not self._stored.has_signing_key:
             logger.warning("Can't upload langpacks without a signing key")
             self.unit.status = ops.ActiveStatus(
                 "Upload disabled. Set and grant 'gpg-secret-id' to enable."
