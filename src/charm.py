@@ -13,6 +13,7 @@ from ops.model import Secret
 from requests.exceptions import RequestException
 
 from langpacks import Langpacks
+from launchpad import LaunchpadClient
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         self.framework.observe(self.on.upload_langpacks_action, self._on_upload_langpacks)
         self.framework.observe(self.on.stop, self._on_stop)
 
-        self._langpacks = Langpacks()
+        self._langpacks = Langpacks(LaunchpadClient())
 
         self._stored.set_default(has_signing_key=False)
 

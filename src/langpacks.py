@@ -13,7 +13,6 @@ import charms.operator_libs_linux.v0.apt as apt
 import requests
 from charms.operator_libs_linux.v0.apt import PackageError, PackageNotFoundError
 from git import GitCommandError, Repo
-from launchpadlib.launchpad import Launchpad
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +39,9 @@ REPO_URL = "https://git.launchpad.net/langpack-o-matic"
 class Langpacks:
     """Represent a langpacks instance in the workload."""
 
-    def __init__(self):
+    def __init__(self, launchpad_client):
         logger.debug("Langpacks class init")
+        self.launchpad_client = launchpad_client
 
     def setup_crontab(self):
         """Configure the crontab for the service."""
@@ -170,20 +170,10 @@ class Langpacks:
 
     def build_langpacks(self, base: bool, release: str):
         """Build the langpacks."""
-        lp = Launchpad.login_anonymously("langpacks", "production")
-        ubuntu = lp.distributions["ubuntu"]
+        release = release.lower()
+        active_series = self.launchpad_client.active_series()
 
         # check that the series used is valid
-        active_series = []
-        for s in ubuntu.series:
-            if s.active:
-                active_series.append(s.name)
-
-        release = release.lower()
-        devel_series = ubuntu.getDevelopmentSeries()[0].name
-        if release == "devel":
-            release = devel_series
-
         if release not in active_series:
             logger.debug("Release %s isn't an active Ubuntu series", release)
             return
