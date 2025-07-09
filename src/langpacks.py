@@ -293,3 +293,26 @@ class Langpacks:
         except CalledProcessError as e:
             logger.debug("Importing key failed: %s", e.stdout)
             raise
+
+    def check_gpg_key(self):
+        """Check if a private gpg key is configured."""
+        try:
+            response = run(
+                [
+                    "gpg",
+                    "--list-secret-keys",
+                    "--with-colons",
+                ],
+                check=True,
+                stdout=PIPE,
+                stderr=STDOUT,
+                text=True,
+            )
+            for line in response.stdout.splitlines():
+                # if the output includes 'sec' then there is a secret key
+                if line.startswith("sec:"):
+                    return True
+            return False
+        except Exception as e:
+            logger.debug("Listing available gpg keys failed: %s", e)
+            return False
