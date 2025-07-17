@@ -60,8 +60,6 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         self.unit.status = ops.MaintenanceStatus("Setting up crontab")
         self._langpacks.setup_crontab()
 
-        self.unit.status = ops.ActiveStatus()
-
     def _on_config_changed(self, event: ops.ConfigChangedEvent):
         """Update configuration and fetch code updates."""
         self.unit.status = ops.MaintenanceStatus("Importing signing key")
