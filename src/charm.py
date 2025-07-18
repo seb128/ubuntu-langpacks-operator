@@ -9,6 +9,7 @@ from subprocess import CalledProcessError
 
 import ops
 from charms.operator_libs_linux.v0.apt import PackageError, PackageNotFoundError
+from git import GitCommandError
 from ops.model import Secret
 from requests.exceptions import RequestException
 
@@ -39,7 +40,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
 
         try:
             self._langpacks.update_checkout()
-        except CalledProcessError:
+        except (CalledProcessError, GitCommandError):
             self.unit.status = ops.BlockedStatus(
                 "Failed to start services. Check `juju debug-log` for details."
             )
@@ -49,12 +50,12 @@ class UbuntuLangpacksCharm(ops.CharmBase):
 
     def _on_install(self, event: ops.InstallEvent):
         """Handle install event."""
-        self.unit.status = ops.MaintenanceStatus("Installing langpack dependencies")
+        self.unit.status = ops.MaintenanceStatus("Setting up environment")
         try:
             self._langpacks.install()
-        except (CalledProcessError, PackageError, PackageNotFoundError):
+        except (CalledProcessError, GitCommandError, PackageError, PackageNotFoundError):
             self.unit.status = ops.BlockedStatus(
-                "Failed to install packages. Check `juju debug-log` for details."
+                "Failed to set up the environment. Check `juju debug-log` for details."
             )
             return
 
