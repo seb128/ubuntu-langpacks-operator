@@ -103,8 +103,10 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         self.unit.status = ops.MaintenanceStatus("Building langpacks")
 
         try:
+            event.log("Building langpacks, it may take a while")
             self._langpacks.build_langpacks(base, release)
         except (CalledProcessError, IOError, RequestException):
+            event.log("Langpacks build failed")
             self.unit.status = ops.ActiveStatus(
                 "Failed to build langpacks. Check `juju debug-log` for details."
             )
@@ -116,6 +118,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
         self.unit.status = ops.MaintenanceStatus("Uploading langpacks")
 
         if not self._langpacks.check_gpg_key():
+            event.log("Can't upload langpacks without a signing key")
             logger.warning("Can't upload langpacks without a signing key")
             self.unit.status = ops.ActiveStatus(
                 "Upload disabled. Set and grant 'gpg-secret-id' to enable."
@@ -123,6 +126,7 @@ class UbuntuLangpacksCharm(ops.CharmBase):
             return
 
         try:
+            event.log("Uploading langpacks, it may take a while")
             self._langpacks.upload_langpacks()
         except CalledProcessError:
             self.unit.status = ops.ActiveStatus(
